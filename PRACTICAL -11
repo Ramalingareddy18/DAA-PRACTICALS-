@@ -1,0 +1,152 @@
+import time
+
+INF = float('inf')
+
+
+def floyd_warshall(graph):
+    n = len(graph)
+    dist = [row[:] for row in graph]
+    next_node = [[None] * n for _ in range(n)]
+
+    for i in range(n):
+        for j in range(n):
+            if graph[i][j] != INF and i != j:
+                next_node[i][j] = j
+
+    for k in range(n):
+        for i in range(n):
+            for j in range(n):
+                if dist[i][k] != INF and dist[k][j] != INF:
+                    if dist[i][k] + dist[k][j] < dist[i][j]:
+                        dist[i][j] = dist[i][k] + dist[k][j]
+                        next_node[i][j] = next_node[i][k]
+
+    return dist, next_node
+
+
+def reconstruct_path(u, v, next_node):
+    if next_node[u][v] is None:
+        return []
+
+    path = [u]
+    curr = u
+
+    while curr != v:
+        curr = next_node[curr][v]
+        if curr is None:
+            return []
+        path.append(curr)
+
+    return path
+
+
+def print_distance_matrix(dist):
+    n = len(dist)
+    print("\n========== ALL-PAIRS SHORTEST DISTANCE MATRIX ==========")
+    header = f"{'From\\To':<8}" + "".join(
+        f"{'Node ' + str(j):>10}" for j in range(n)
+    )
+    print(header)
+    print("-" * len(header))
+
+    for i in range(n):
+        row = f"Node {i:<3}"
+        for j in range(n):
+            value = "INF" if dist[i][j] == INF else str(dist[i][j])
+            row += f"{value:>10}"
+        print(row)
+
+    print("-" * len(header))
+
+
+def main():
+    print("=" * 50)
+    print("      FLOYD-WARSHALL ALL-PAIRS SHORTEST PATH")
+    print("=" * 50)
+
+    default_graph = [
+        [0, 3, INF, 7],
+        [8, 0, 2, INF],
+        [5, INF, 0, 1],
+        [2, INF, INF, 0]
+    ]
+
+    print("Default Graph Adjacency Weight Matrix:")
+    print_distance_matrix(default_graph)
+
+    choice = input("\nUse custom input? (y/N): ").strip().lower()
+
+    if choice == 'y':
+        try:
+            n = int(input("Enter number of vertices: "))
+            if n < 1:
+                raise ValueError("Vertices must be at least 1.")
+
+            print(f"Enter {n}x{n} matrix (use INF for no edge):")
+            graph = []
+
+            for i in range(n):
+                values = input(f"Row {i}: ").split()
+
+                if len(values) != n:
+                    raise ValueError("Each row must contain n values.")
+
+                row = [
+                    INF if value.upper() == 'INF' else int(value)
+                    for value in values
+                ]
+                graph.append(row)
+
+            for i in range(n):
+                graph[i][i] = 0
+
+        except ValueError as error:
+            print(f"Invalid input: {error}")
+            print("Using default graph.")
+            graph = default_graph
+    else:
+        graph = default_graph
+
+    n = len(graph)
+
+    print("\n--- Running Floyd-Warshall Algorithm ---")
+    start_time = time.perf_counter()
+    dist_matrix, next_matrix = floyd_warshall(graph)
+    end_time = time.perf_counter()
+
+    print_distance_matrix(dist_matrix)
+
+    if any(dist_matrix[i][i] < 0 for i in range(n)):
+        print("\nNegative-weight cycle detected!")
+        print("Shortest paths are not well-defined.")
+    else:
+        print("\n========== SHORTEST PATHS ==========")
+        print(f"{'Source':<10} {'Target':<10} {'Cost':<8} Path")
+        print("-" * 45)
+
+        for u in range(n):
+            for v in range(n):
+                if u != v:
+                    cost = (
+                        "INF" if dist_matrix[u][v] == INF
+                        else str(dist_matrix[u][v])
+                    )
+                    path = reconstruct_path(u, v, next_matrix)
+                    path_str = (
+                        " -> ".join(map(str, path))
+                        if path else "No Path"
+                    )
+                    print(
+                        f"{u:<10} {v:<10} {cost:<8} {path_str}"
+                    )
+
+    print("\n========== RESULTS SUMMARY ==========")
+    print(f"Total Vertices (V) : {n}")
+    print(f"Execution Time     : {(end_time - start_time) * 1e9:.2f} ns")
+    print("Time Complexity    : O(V^3)")
+    print("Space Complexity   : O(V^2)")
+    print("======================================")
+
+
+if __name__ == "__main__":
+    main()
