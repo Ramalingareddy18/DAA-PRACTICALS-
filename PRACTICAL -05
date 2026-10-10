@@ -1,0 +1,82 @@
+
+import time
+
+# 0/1 Knapsack using Dynamic Programming
+def knapsack_dp(weights, values, capacity):
+    n = len(weights)
+    dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+
+    for i in range(1, n + 1):
+        for w in range(1, capacity + 1):
+            if weights[i - 1] <= w:
+                dp[i][w] = max(
+                    dp[i - 1][w],
+                    values[i - 1] + dp[i - 1][w - weights[i - 1]]
+                )
+            else:
+                dp[i][w] = dp[i - 1][w]
+
+    selected = []
+    w = capacity
+    for i in range(n, 0, -1):
+        if dp[i][w] != dp[i - 1][w]:
+            selected.append(i - 1)
+            w -= weights[i - 1]
+
+    selected.reverse()
+    return dp[n][capacity], dp, selected
+
+# Print DP Table
+def print_dp_table(weights, values, capacity, dp):
+    print("\nDP TABLE:")
+    print("Item (w,v)  ", end="")
+    for w in range(capacity + 1):
+        print(f"{w:5}", end="")
+    print()
+
+    print("Base        ", end="")
+    for x in dp[0]:
+        print(f"{x:5}", end="")
+    print()
+
+    for i in range(1, len(weights) + 1):
+        print(f"Item {i}     ", end="")
+        for x in dp[i]:
+            print(f"{x:5}", end="")
+        print()
+
+# Main Program
+n = int(input("Enter number of items: "))
+weights = []
+values = []
+
+for i in range(n):
+    w, v = map(int, input(
+        f"Enter weight and value of item {i + 1}: "
+    ).split())
+    weights.append(w)
+    values.append(v)
+
+capacity = int(input("Enter knapsack capacity: "))
+
+if capacity < 0 or any(w <= 0 for w in weights) or any(v < 0 for v in values):
+    print("Invalid input: capacity must be non-negative, weights positive, and values non-negative.")
+    raise SystemExit
+
+start = time.perf_counter()
+max_value, dp, selected = knapsack_dp(weights, values, capacity)
+end = time.perf_counter()
+
+print_dp_table(weights, values, capacity, dp)
+
+print("\nSELECTED ITEMS:")
+total_weight = 0
+for i in selected:
+    print(f"Item {i + 1}: Weight = {weights[i]}, Value = {values[i]}")
+    total_weight += weights[i]
+
+print("\nMaximum Profit:", max_value)
+print("Total Weight:", total_weight, "/", capacity)
+print("Time Complexity: O(n * W)")
+print("Space Complexity: O(n * W)")
+print(f"Execution Time: {(end - start) * 1e9:.2f} ns")
