@@ -1,0 +1,101 @@
+
+import time
+
+INF = 9999
+
+# Greedy Coin Change
+def greedy_change(coins, amount):
+    count = 0
+    used = []
+    remaining = amount
+
+    for coin in sorted(coins, reverse=True):
+        while remaining >= coin:
+            used.append(coin)
+            remaining -= coin
+            count += 1
+
+    return count, used
+
+# Dynamic Programming Coin Change
+def dp_change(coins, amount):
+    n = len(coins)
+    dp = [[0] * (amount + 1) for _ in range(n + 1)]
+
+    for j in range(1, amount + 1):
+        dp[0][j] = INF
+
+    for i in range(1, n + 1):
+        for j in range(1, amount + 1):
+            dp[i][j] = dp[i - 1][j]
+            if coins[i - 1] <= j:
+                dp[i][j] = min(
+                    dp[i][j],
+                    dp[i][j - coins[i - 1]] + 1
+                )
+
+    used = []
+    remaining = amount
+    i = n
+
+    while remaining > 0 and i > 0:
+        if dp[i][remaining] != dp[i - 1][remaining]:
+            used.append(coins[i - 1])
+            remaining -= coins[i - 1]
+        else:
+            i -= 1
+
+    return dp[n][amount], dp, used
+
+# Print DP Table
+def print_table(coins, amount, dp):
+    print("\nDP TABLE:")
+    print("Coin/Amt ", end="")
+    for j in range(amount + 1):
+        print(f"{j:5}", end="")
+    print()
+
+    for i, coin in enumerate(coins, 1):
+        print(f"{coin:<9}", end="")
+        for value in dp[i]:
+            print(f"{value if value < INF else '-':>5}", end="")
+        print()
+
+# Main Program
+coins = [1, 5, 6, 9]
+print("Coins available:", coins)
+
+try:
+    amount = int(input("Enter amount: "))
+    if amount < 0:
+        print("Amount cannot be negative.")
+        raise SystemExit
+except ValueError:
+    print("Please enter a valid integer.")
+    raise SystemExit
+
+start = time.perf_counter()
+greedy_count, greedy_coins = greedy_change(coins, amount)
+greedy_time = (time.perf_counter() - start) * 1e9
+
+start = time.perf_counter()
+dp_count, dp, dp_coins = dp_change(coins, amount)
+dp_time = (time.perf_counter() - start) * 1e9
+
+print_table(coins, amount, dp)
+
+print("\nGreedy Coins Used:", greedy_coins)
+print("DP Coins Used:", dp_coins)
+
+print("\nRESULTS")
+print("Amount:", amount)
+print("Greedy Result:", greedy_count, "coins")
+print(f"Greedy Time: {greedy_time:.2f} ns")
+print("DP Result:", dp_count, "coins")
+print(f"DP Time: {dp_time:.2f} ns")
+
+print("\nCOMPARISON")
+print(f"{'Method':<12} | {'Coins':<8} | {'Optimal?'}")
+print("-" * 35)
+print(f"{'Greedy':<12} | {greedy_count:<8} | {'Yes' if greedy_count == dp_count else 'No'}")
+print(f"{'DP':<12} | {dp_count:<8} | Yes")
