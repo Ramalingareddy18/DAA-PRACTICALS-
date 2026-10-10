@@ -1,0 +1,93 @@
+
+import collections
+import time
+
+class Graph:
+    def __init__(self, vertices):
+        self.V = vertices
+        self.adj = collections.defaultdict(list)
+
+    def add_edge(self, u, v):
+        self.adj[u].append(v)
+        self.adj[v].append(u)
+
+    # Depth First Search (DFS)
+    def dfs(self, start):
+        visited = [False] * self.V
+        order = []
+
+        def dfs_util(v):
+            visited[v] = True
+            order.append(v)
+            for neighbor in self.adj[v]:
+                if not visited[neighbor]:
+                    dfs_util(neighbor)
+
+        dfs_util(start)
+        return order
+
+    # Breadth First Search (BFS)
+    def bfs(self, start):
+        visited = [False] * self.V
+        order = []
+        queue = collections.deque([start])
+        visited[start] = True
+
+        while queue:
+            node = queue.popleft()
+            order.append(node)
+
+            for neighbor in self.adj[node]:
+                if not visited[neighbor]:
+                    visited[neighbor] = True
+                    queue.append(neighbor)
+
+        return order
+
+# Main Program
+try:
+    V = int(input("Enter number of vertices: "))
+    E = int(input("Enter number of edges: "))
+
+    if V <= 0 or E < 0:
+        raise ValueError
+
+    g = Graph(V)
+
+    print("Enter edges (u v):")
+    for _ in range(E):
+        u, v = map(int, input().split())
+        if not (0 <= u < V and 0 <= v < V):
+            raise ValueError
+        g.add_edge(u, v)
+
+    start_node = int(input("Enter starting vertex: "))
+    if not (0 <= start_node < V):
+        raise ValueError
+
+except ValueError:
+    print("Invalid input! Check vertices, edges, and starting vertex.")
+    raise SystemExit
+
+# DFS Execution
+start = time.perf_counter()
+dfs_result = g.dfs(start_node)
+dfs_time = (time.perf_counter() - start) * 1e9
+
+# BFS Execution
+start = time.perf_counter()
+bfs_result = g.bfs(start_node)
+bfs_time = (time.perf_counter() - start) * 1e9
+
+# Results
+print("\nDFS Traversal:", *dfs_result)
+print("BFS Traversal:", *bfs_result)
+
+print("\nExecution Time:")
+print(f"DFS: {dfs_time:.2f} ns")
+print(f"BFS: {bfs_time:.2f} ns")
+
+print("\nCOMPLEXITY SUMMARY")
+print("Algorithm | Time Complexity | Space Complexity")
+print("DFS       | O(V + E)        | O(V)")
+print("BFS       | O(V + E)        | O(V)")
